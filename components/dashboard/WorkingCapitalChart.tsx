@@ -88,7 +88,9 @@ export default function WorkingCapitalChart({ invoices }: Props) {
             tickLine={false}
           />
           <Tooltip
-            formatter={(value: number) => "₦" + value.toLocaleString("en-NG")}
+            formatter={(value) =>
+              value ? "₦" + (value as number).toLocaleString("en-NG") : ""
+            }
             contentStyle={{
               borderRadius: "8px",
               border: "1px solid #e5e7eb",

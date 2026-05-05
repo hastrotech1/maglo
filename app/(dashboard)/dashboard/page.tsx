@@ -4,6 +4,7 @@ import MetricCard from "@/components/dashboard/MetricsCard";
 import WorkingCapitalChart from "@/components/dashboard/WorkingCapitalChart";
 import InvoiceTable from "@/components/invoices/InvoiceTable";
 import { FileText, CheckCircle, Clock, Receipt } from "lucide-react";
+import type { Invoice } from "@/types/invoice";
 
 // All metric computation happens here, server-side
 // Client components only receive the final numbers
@@ -20,7 +21,7 @@ function computeMetrics(invoices: Awaited<ReturnType<typeof getInvoices>>) {
 }
 
 export default async function DashboardPage() {
-  let invoices = [];
+  let invoices: Invoice[] = [];
   let error: string | null = null;
 
   try {
@@ -47,7 +48,7 @@ export default async function DashboardPage() {
           </p>
           <p className="text-[12px] text-red-700 mt-1">{error}</p>
           {error.includes("missing scopes") && (
-            <p className="text-[11px] text-red-600 mt-2">
+            <p className="text-[12px] text-red-600 mt-2">
               Please update your Appwrite API key with the required scopes:
               documents.read, documents.write, documents.delete
             </p>

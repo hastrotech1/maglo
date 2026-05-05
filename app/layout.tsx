@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { Kumbh_Sans } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
+
+const kumbhSans = Kumbh_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "Maglo Finance",
@@ -13,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={kumbhSans.variable} suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
         {/* Global toast container — picks up all toast() calls */}

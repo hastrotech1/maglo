@@ -1,5 +1,4 @@
-// src/actions/invoice.actions.ts
-"use server"; // ← marks every export as a Server Action
+"use server";
 
 import { revalidatePath } from "next/cache";
 import { ID, Query } from "node-appwrite";
@@ -31,7 +30,8 @@ export async function getInvoices(): Promise<Invoice[]> {
     Query.limit(100),
   ]);
 
-  return response.documents as unknown as Invoice[];
+  // Convert Appwrite documents to plain objects for Client Components
+  return JSON.parse(JSON.stringify(response.documents)) as Invoice[];
 }
 
 // CREATE
