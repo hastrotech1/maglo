@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/actions/auth.actions";
+import Logo from "@/public/Logo.png";
 import {
   LayoutDashboard,
   FileText,
@@ -25,15 +27,16 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[210px] flex-shrink-0 bg-[#181818] flex flex-col py-5 px-3">
+    <aside className="w-[210px] flex-shrink-0 bg-[#FAFAFA] flex flex-col py-5 px-3">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-2 mb-6">
-        <div className="w-8 h-8 rounded-lg bg-[#c5e44e] flex items-center justify-center font-black text-sm text-[#1a1a1a]">
-          m
-        </div>
-        <span className="text-white font-bold text-[15px] tracking-tight">
-          Maglo.
-        </span>
+      <div className="px-2 mb-6">
+        <Image
+          src={Logo}
+          alt="Maglo Logo"
+          width={100}
+          height={32}
+          className="w-auto h-8"
+        />
       </div>
 
       {/* Main nav */}

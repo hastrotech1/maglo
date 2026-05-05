@@ -1,15 +1,15 @@
 import { signUp } from "@/actions/auth.actions";
 import Link from "next/link";
+import Image from "next/image";
+import Logo from "@/public/Logo.png";
+import Image2 from "@/public/Image.png";
 
 export default function SignupPage() {
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex flex-col justify-center px-10 py-12 bg-white">
-        <div className="flex items-center gap-2 mb-12">
-          <div className="w-8 h-8 rounded-lg bg-[#c5e44e] flex items-center justify-center font-black text-sm">
-            m
-          </div>
-          <span className="font-bold text-[15px]">Maglo.</span>
+        <div className="mb-12">
+          <Image src={Logo} alt="Maglo Logo" width={120} height={40} priority />
         </div>
 
         <h1 className="text-[26px] font-bold tracking-tight mb-1">
@@ -75,15 +75,14 @@ export default function SignupPage() {
         </p>
       </div>
 
-      <div className="hidden md:flex w-[44%] bg-[#e8e8e2] items-center justify-center">
-        <div className="text-center">
-          <div className="w-24 h-24 rounded-full bg-[#c5e44e] flex items-center justify-center text-4xl mx-auto mb-4">
-            ⏱
-          </div>
-          <p className="text-[14px] font-semibold text-gray-600">
-            Join thousands of businesses
-          </p>
-        </div>
+      <div className="hidden md:flex w-[44%] bg-[#e8e8e2] items-center justify-center p-8">
+        <Image
+          src={Image2}
+          alt="Maglo"
+          width={400}
+          height={500}
+          className="object-contain"
+        />
       </div>
     </div>
   );
