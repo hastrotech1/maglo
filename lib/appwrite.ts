@@ -4,25 +4,25 @@ import { Client, Account } from "appwrite";
 function getValidatedEndpoint(): string {
   const raw = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
 
-  if (!raw) {
-    const msg = `NEXT_PUBLIC_APPWRITE_ENDPOINT is not set. Make sure your .env.local file has:
+  if (!raw || !raw.trim()) {
+    const msg = `❌ NEXT_PUBLIC_APPWRITE_ENDPOINT is not set or empty.
+    
+Please add this to your .env.local file:
 NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1`;
     console.error(msg);
-    throw new Error(msg);
+    throw new Error("Invalid Appwrite endpoint");
   }
 
   const trimmed = raw.trim();
-  if (!trimmed) {
-    throw new Error(
-      "NEXT_PUBLIC_APPWRITE_ENDPOINT is empty or whitespace-only. Check your .env.local file.",
-    );
-  }
 
   // Validate it looks like a URL
   if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-    throw new Error(
-      `NEXT_PUBLIC_APPWRITE_ENDPOINT must be a valid URL starting with http:// or https://. Got: "${trimmed}"`,
-    );
+    const msg = `❌ NEXT_PUBLIC_APPWRITE_ENDPOINT must be a valid URL.
+    
+Got: "${trimmed}"
+Expected format: https://cloud.appwrite.io/v1`;
+    console.error(msg);
+    throw new Error("Invalid Appwrite endpoint format");
   }
 
   return trimmed;
@@ -31,30 +31,50 @@ NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1`;
 function getValidatedProjectId(): string {
   const raw = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 
-  if (!raw) {
-    const msg = `NEXT_PUBLIC_APPWRITE_PROJECT_ID is not set. Make sure your .env.local file has:
+  if (!raw || !raw.trim()) {
+    const msg = `❌ NEXT_PUBLIC_APPWRITE_PROJECT_ID is not set or empty.
+    
+Please add this to your .env.local file:
 NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_project_id`;
     console.error(msg);
-    throw new Error(msg);
+    throw new Error("Invalid Appwrite project ID");
   }
 
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    throw new Error(
-      "NEXT_PUBLIC_APPWRITE_PROJECT_ID is empty or whitespace-only. Check your .env.local file.",
-    );
-  }
-
-  return trimmed;
+  return raw.trim();
 }
 
-// Validate environment variables at module load time
-const endpoint = getValidatedEndpoint();
-const projectId = getValidatedProjectId();
+// Lazy initialization: only validate when actually needed
+let cachedEndpoint: string | null = null;
+let cachedProjectId: string | null = null;
+let client: Client | null = null;
+let account: Account | null = null;
 
-// One shared client instance (singleton pattern)
-const client = new Client().setEndpoint(endpoint).setProject(projectId);
+function initializeClient() {
+  if (client && account) {
+    return { client, account };
+  }
 
-// Account handles login, signup, sessions
-export const account = new Account(client);
-export { client };
+  try {
+    cachedEndpoint = getValidatedEndpoint();
+    cachedProjectId = getValidatedProjectId();
+    client = new Client()
+      .setEndpoint(cachedEndpoint)
+      .setProject(cachedProjectId);
+    account = new Account(client);
+    return { client, account };
+  } catch (error) {
+    console.error("Failed to initialize Appwrite client:", error);
+    throw error;
+  }
+}
+
+// Export lazy-loaded instances
+export function getAccount(): Account {
+  const { account } = initializeClient();
+  return account;
+}
+
+export function getClient(): Client {
+  const { client } = initializeClient();
+  return client;
+}
