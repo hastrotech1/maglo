@@ -4,148 +4,158 @@ import { revalidatePath } from "next/cache";
 import { ID, Query } from "node-appwrite";
 import { createAdminClient, createSessionClient } from "@/lib/appwrite-server";
 import { invoiceSchema } from "@/lib/validations";
+import { parseAppwriteError } from "@/lib/appwrite-error";
 import type { Invoice } from "@/types/invoice";
 
-// Constants
 const DB = process.env.APPWRITE_DATABASE_ID!;
 const COLL = process.env.APPWRITE_COLLECTION_ID!;
 
-// Helper: get current user's ID
-// Called at the start of every action to identify the caller.
-// If the session is expired, this throws and the action fails safely.
 async function getCurrentUserId(): Promise<string> {
   const { account } = await createSessionClient();
   const user = await account.get();
   return user.$id;
 }
 
-// READ
 export async function getInvoices(): Promise<Invoice[]> {
-  const userId = await getCurrentUserId();
-  const { databases } = createAdminClient();
-
-  const response = await databases.listDocuments(DB, COLL, [
-    Query.equal("userId", userId), // only this user's invoices
-    Query.orderDesc("$createdAt"), // newest first
-    Query.limit(100),
-  ]);
-
-  // Convert Appwrite documents to plain objects for Client Components
-  return JSON.parse(JSON.stringify(response.documents)) as Invoice[];
+  try {
+    const userId = await getCurrentUserId();
+    const { databases } = createAdminClient();
+    const response = await databases.listDocuments(DB, COLL, [
+      Query.equal("userId", userId),
+      Query.orderDesc("$createdAt"),
+      Query.limit(100),
+    ]);
+    return JSON.parse(JSON.stringify(response.documents)) as Invoice[];
+  } catch (error) {
+    console.error("[getInvoices]", error);
+    throw new Error(parseAppwriteError(error));
+  }
 }
 
-// CREATE
-export async function createInvoice(formData: FormData) {
-  // 1. Parse + validate with Zod
+export async function createInvoice(formData: FormData): Promise<{
+  success: boolean;
+  error?: string;
+  errors?: Record<string, string[]>;
+}> {
   const raw = Object.fromEntries(formData.entries());
   const parsed = invoiceSchema.safeParse(raw);
 
   if (!parsed.success) {
-    // Return errors — the client will display them next to each field
-    return {
-      success: false,
-      errors: parsed.error.flatten().fieldErrors,
-    };
+    return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  // 2. Compute derived fields server-side
-  //    Never trust the client to compute these
-  const { amount, vat } = parsed.data;
-  const vatAmount = parseFloat((amount * (vat / 100)).toFixed(2));
-  const total = parseFloat((amount + vatAmount).toFixed(2));
+  try {
+    const { amount, vat } = parsed.data;
+    const vatAmount = parseFloat((amount * (vat / 100)).toFixed(2));
+    const total = parseFloat((amount + vatAmount).toFixed(2));
 
-  // 3. Write to Appwrite
-  const userId = await getCurrentUserId();
-  const { databases } = createAdminClient();
+    const userId = await getCurrentUserId();
+    const { databases } = createAdminClient();
 
-  await databases.createDocument(DB, COLL, ID.unique(), {
-    ...parsed.data,
-    vatAmount,
-    total,
-    userId,
-  });
+    await databases.createDocument(DB, COLL, ID.unique(), {
+      ...parsed.data,
+      vatAmount,
+      total,
+      userId,
+    });
 
-  // 4. Tell Next.js to re-fetch data for these routes
-  revalidatePath("/dashboard");
-  revalidatePath("/invoices");
-
-  return { success: true };
+    revalidatePath("/dashboard");
+    revalidatePath("/invoices");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: parseAppwriteError(error) };
+  }
 }
 
-// UPDATE
-export async function updateInvoice(invoiceId: string, formData: FormData) {
-  const userId = await getCurrentUserId();
-
+export async function updateInvoice(
+  invoiceId: string,
+  formData: FormData,
+): Promise<{
+  success: boolean;
+  error?: string;
+  errors?: Record<string, string[]>;
+}> {
   const raw = Object.fromEntries(formData.entries());
   const parsed = invoiceSchema.safeParse(raw);
 
   if (!parsed.success) {
-    return {
-      success: false,
-      errors: parsed.error.flatten().fieldErrors,
-    };
+    return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { amount, vat } = parsed.data;
-  const vatAmount = parseFloat((amount * (vat / 100)).toFixed(2));
-  const total = parseFloat((amount + vatAmount).toFixed(2));
+  try {
+    const userId = await getCurrentUserId();
+    const { databases } = createAdminClient();
 
-  const { databases } = createAdminClient();
+    const existing = await databases.getDocument(DB, COLL, invoiceId);
+    if (existing.userId !== userId) {
+      return {
+        success: false,
+        error: "You don't have permission to edit this invoice.",
+      };
+    }
 
-  // Verify ownership before updating — prevents one user editing another's invoice
-  const existing = await databases.getDocument(DB, COLL, invoiceId);
-  if (existing.userId !== userId) {
-    return { success: false, errors: { root: ["Unauthorized"] } };
+    const { amount, vat } = parsed.data;
+    const vatAmount = parseFloat((amount * (vat / 100)).toFixed(2));
+    const total = parseFloat((amount + vatAmount).toFixed(2));
+
+    await databases.updateDocument(DB, COLL, invoiceId, {
+      ...parsed.data,
+      vatAmount,
+      total,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/invoices");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: parseAppwriteError(error) };
   }
-
-  await databases.updateDocument(DB, COLL, invoiceId, {
-    ...parsed.data,
-    vatAmount,
-    total,
-  });
-
-  revalidatePath("/dashboard");
-  revalidatePath("/invoices");
-
-  return { success: true };
 }
 
-// MARK PAID
-// Separate action from updateInvoice — single responsibility.
-// The dashboard metrics recalculate automatically after revalidation.
-export async function markInvoicePaid(invoiceId: string) {
-  const userId = await getCurrentUserId();
-  const { databases } = createAdminClient();
+export async function markInvoicePaid(
+  invoiceId: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userId = await getCurrentUserId();
+    const { databases } = createAdminClient();
 
-  const existing = await databases.getDocument(DB, COLL, invoiceId);
-  if (existing.userId !== userId) {
-    return { success: false, error: "Unauthorized" };
+    const existing = await databases.getDocument(DB, COLL, invoiceId);
+    if (existing.userId !== userId) {
+      return {
+        success: false,
+        error: "You don't have permission to update this invoice.",
+      };
+    }
+
+    await databases.updateDocument(DB, COLL, invoiceId, { status: "paid" });
+    revalidatePath("/dashboard");
+    revalidatePath("/invoices");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: parseAppwriteError(error) };
   }
-
-  await databases.updateDocument(DB, COLL, invoiceId, {
-    status: "paid",
-  });
-
-  revalidatePath("/dashboard");
-  revalidatePath("/invoices");
-
-  return { success: true };
 }
 
-// DELETE
-export async function deleteInvoice(invoiceId: string) {
-  const userId = await getCurrentUserId();
-  const { databases } = createAdminClient();
+export async function deleteInvoice(
+  invoiceId: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userId = await getCurrentUserId();
+    const { databases } = createAdminClient();
 
-  const existing = await databases.getDocument(DB, COLL, invoiceId);
-  if (existing.userId !== userId) {
-    return { success: false, error: "Unauthorized" };
+    const existing = await databases.getDocument(DB, COLL, invoiceId);
+    if (existing.userId !== userId) {
+      return {
+        success: false,
+        error: "You don't have permission to delete this invoice.",
+      };
+    }
+
+    await databases.deleteDocument(DB, COLL, invoiceId);
+    revalidatePath("/dashboard");
+    revalidatePath("/invoices");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: parseAppwriteError(error) };
   }
-
-  await databases.deleteDocument(DB, COLL, invoiceId);
-
-  revalidatePath("/dashboard");
-  revalidatePath("/invoices");
-
-  return { success: true };
 }

@@ -1,11 +1,31 @@
-// src/app/(auth)/login/page.tsx
+"use client";
+
 import { signIn } from "@/actions/auth.actions";
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/public/Logo.png";
 import Image2 from "@/public/Image.png";
+import toast from "react-hot-toast";
+import { useTransition, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
+  const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    startTransition(async () => {
+      const result = await signIn(formData);
+      // If result is undefined it means redirect() was called (success)
+      if (result && !result.success) {
+        toast.error(result.error);
+      }
+    });
+  }
   return (
     <div className="min-h-screen flex">
       {/* Form side */}
@@ -22,7 +42,12 @@ export default function LoginPage() {
         </p>
 
         {/* form action calls the Server Action directly */}
-        <form action={signIn} className="space-y-4 max-w-sm">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="space-y-4 max-w-sm"
+        >
+          {" "}
           <div>
             <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
               Email
@@ -39,20 +64,29 @@ export default function LoginPage() {
             <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
               Password
             </label>
-            <input
-              name="password"
-              type="password"
-              required
-              placeholder="••••••••"
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-[13px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
-            />
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="••••••••"
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-[13px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
-
           <button
             type="submit"
+            disabled={isPending}
             className="w-full py-3 rounded-lg bg-[#c5e44e] text-[#1a1a1a] font-bold text-[14px] hover:-translate-y-px hover:shadow-lg hover:shadow-lime-200 transition-all"
           >
-            Sign in
+            {isPending ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
@@ -68,14 +102,8 @@ export default function LoginPage() {
       </div>
 
       {/* Visual side */}
-      <div className="hidden md:flex w-[44%] bg-[#e8e8e2] items-center justify-center p-8">
-        <Image
-          src={Image2}
-          alt="Maglo"
-          width={400}
-          height={500}
-          className="object-contain"
-        />
+      <div className="hidden md:flex flex-1 bg-[#e8e8e2] items-center justify-center relative overflow-hidden">
+        <Image src={Image2} alt="Maglo" fill className="object-contain" />
       </div>
     </div>
   );
