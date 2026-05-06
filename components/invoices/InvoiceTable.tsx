@@ -64,7 +64,8 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
-    setNow(Date.now());
+    const id = setTimeout(() => setNow(Date.now()), 0);
+    return () => clearTimeout(id);
   }, []);
 
   const filtered = invoices.filter((i) =>
