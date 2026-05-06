@@ -1,6 +1,10 @@
 import { AppwriteException } from "node-appwrite";
 
 export function parseAppwriteError(error: unknown): string {
+  if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+    throw error;
+  }
+
   // Appwrite SDK throws AppwriteException with a code + message
   if (error instanceof AppwriteException) {
     switch (error.code) {
@@ -34,8 +38,6 @@ export function parseAppwriteError(error: unknown): string {
   }
 
   if (error instanceof Error) {
-    // Next.js redirect throws a special error — re-throw it
-    if (error.message === "NEXT_REDIRECT") throw error;
     return error.message;
   }
 
