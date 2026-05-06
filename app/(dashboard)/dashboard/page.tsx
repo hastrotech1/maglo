@@ -57,7 +57,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <MetricCard
           label="Total Invoice"
           value={metrics.totalInvoices.toString()}

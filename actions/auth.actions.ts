@@ -26,7 +26,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     const cookieStore = await cookies();
     cookieStore.set("appwrite-session", session.secret, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // ← fixes dev localhost
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       expires: new Date(session.expire),

@@ -1,7 +1,7 @@
 // src/components/invoices/InvoiceTable.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { Pencil, Trash2, CheckCheck, Plus } from "lucide-react";
 import Link from "next/link";
@@ -14,21 +14,33 @@ type Filter = "all" | "paid" | "unpaid";
 const fmt = (n: number) =>
   "₦" + n.toLocaleString("en-NG", { minimumFractionDigits: 2 });
 
-function daysUntil(dateStr: string) {
-  return Math.ceil(
-    (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-  );
+const dateFormatter = new Intl.DateTimeFormat("en-NG", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatDate(dateStr: string) {
+  return dateFormatter.format(new Date(dateStr));
+}
+
+function daysUntil(dateStr: string, now: number) {
+  return Math.ceil((new Date(dateStr).getTime() - now) / (1000 * 60 * 60 * 24));
 }
 
 function DueCountdown({
   dueDate,
   status,
+  now,
 }: {
   dueDate: string;
   status: string;
+  now: number | null;
 }) {
   if (status === "paid") return null;
-  const days = daysUntil(dueDate);
+  if (!now) return null;
+  const days = daysUntil(dueDate, now);
   if (days < 0)
     return (
       <span className="text-[10.5px] font-medium text-red-500">
@@ -49,6 +61,11 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
 
   const filtered = invoices.filter((i) =>
     filter === "all" ? true : i.status === filter,
@@ -123,8 +140,116 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
           </button>
         </div>
 
+        {/* Mobile list */}
+        <div className="md:hidden">
+          {filtered.length === 0 && (
+            <div className="text-center py-10 text-[13px] text-gray-400">
+              No invoices found.
+            </div>
+          )}
+          <div className="divide-y divide-gray-100">
+            {filtered.map((inv) => {
+              const isOverdue =
+                now !== null &&
+                daysUntil(inv.dueDate, now) < 0 &&
+                inv.status === "unpaid";
+
+              return (
+                <div key={inv.$id} className="p-4 space-y-3">
+                  <Link href={`/invoices/${inv.$id}`} className="block">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-[14px] text-gray-900">
+                          {inv.client}
+                        </div>
+                        <div className="text-[11px] text-gray-400">
+                          {inv.email}
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold
+                          ${
+                            isOverdue
+                              ? "bg-red-50 text-red-600"
+                              : inv.status === "paid"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-amber-50 text-amber-700"
+                          }
+                        `}
+                      >
+                        {isOverdue
+                          ? "Overdue"
+                          : inv.status === "paid"
+                            ? "Paid"
+                            : "Pending"}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-[12px] text-gray-700">
+                      {formatDate(inv.$createdAt)}
+                    </div>
+                    <DueCountdown
+                      dueDate={inv.dueDate}
+                      status={inv.status}
+                      now={now}
+                    />
+                  </Link>
+
+                  <div className="grid grid-cols-2 gap-2 text-[12px]">
+                    <div className="rounded-lg bg-gray-50 p-2">
+                      <p className="text-[10px] text-gray-400">Amount</p>
+                      <p className="font-semibold text-gray-800">
+                        {fmt(inv.amount)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-2">
+                      <p className="text-[10px] text-gray-400">VAT</p>
+                      <p className="font-semibold text-gray-800">
+                        {fmt(inv.vatAmount)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-2 col-span-2">
+                      <p className="text-[10px] text-gray-400">Total</p>
+                      <p className="font-semibold text-gray-900">
+                        {fmt(inv.total)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    {inv.status === "unpaid" && (
+                      <button
+                        onClick={() => handleMarkPaid(inv.$id)}
+                        disabled={isPending}
+                        title="Mark as paid"
+                        className="px-2.5 py-1.5 rounded-md bg-[#c5e44e] text-[#1a1a1a] text-[11px] font-semibold hover:shadow-sm transition-all disabled:opacity-50"
+                      >
+                        <CheckCheck size={12} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => openEdit(inv)}
+                      title="Edit invoice"
+                      className="px-2.5 py-1.5 rounded-md border border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300 text-[11px] transition-all"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(inv.$id)}
+                      disabled={isPending}
+                      title="Delete invoice"
+                      className="px-2.5 py-1.5 rounded-md border border-red-100 text-red-400 hover:bg-red-50 text-[11px] transition-all disabled:opacity-50"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
@@ -158,8 +283,10 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                 </tr>
               )}
               {filtered.map((inv) => {
-                const days = daysUntil(inv.dueDate);
-                const isOverdue = days < 0 && inv.status === "unpaid";
+                const isOverdue =
+                  now !== null &&
+                  daysUntil(inv.dueDate, now) < 0 &&
+                  inv.status === "unpaid";
 
                 return (
                   <tr
@@ -182,18 +309,12 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                     <td className="px-4 py-3.5">
                       <Link href={`/invoices/${inv.$id}`}>
                         <div className="text-[12px] text-gray-700">
-                          {new Date(inv.$createdAt).toLocaleDateString(
-                            "en-NG",
-                            {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            },
-                          )}
+                          {formatDate(inv.$createdAt)}
                         </div>
                         <DueCountdown
                           dueDate={inv.dueDate}
                           status={inv.status}
+                          now={now}
                         />
                       </Link>
                     </td>

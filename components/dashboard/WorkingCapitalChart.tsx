@@ -12,6 +12,12 @@ import {
 } from "recharts";
 import type { Invoice } from "@/types/invoice";
 
+const dateFormatter = new Intl.DateTimeFormat("en-NG", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 // Group invoices by day to build chart data points
 function buildChartData(invoices: Invoice[]) {
   const map = new Map<string, { income: number; expenses: number }>();
@@ -34,10 +40,7 @@ function buildChartData(invoices: Invoice[]) {
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-7) // last 7 days with data
     .map(([date, values]) => ({
-      date: new Date(date).toLocaleDateString("en-NG", {
-        month: "short",
-        day: "numeric",
-      }),
+      date: dateFormatter.format(new Date(date)),
       ...values,
     }));
 }
