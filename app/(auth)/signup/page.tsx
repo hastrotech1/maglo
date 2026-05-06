@@ -16,9 +16,34 @@ export default function SignupPage() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    // Trim inputs
+    const name = (formData.get("name") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim();
+    const password = (formData.get("password") as string)?.trim();
+    
+    // Client-side validation
+    if (!name) {
+      toast.error("Please enter your full name");
+      return;
+    }
+    if (!email) {
+      toast.error("Please enter your email");
+      return;
+    }
+    if (!password || password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
 
     startTransition(async () => {
-      const result = await signUp(formData);
+      // Update FormData with trimmed values
+      const cleanFormData = new FormData();
+      cleanFormData.set("name", name);
+      cleanFormData.set("email", email);
+      cleanFormData.set("password", password);
+      
+      const result = await signUp(cleanFormData);
       if (result && !result.success) {
         toast.error(result.error);
       }

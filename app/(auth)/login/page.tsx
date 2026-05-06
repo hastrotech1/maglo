@@ -18,8 +18,27 @@ export default function LoginPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    // Trim inputs
+    const email = (formData.get("email") as string)?.trim();
+    const password = (formData.get("password") as string)?.trim();
+
+    // Client-side validation
+    if (!email) {
+      toast.error("Please enter your email");
+      return;
+    }
+    if (!password) {
+      toast.error("Please enter your password");
+      return;
+    }
+
     startTransition(async () => {
-      const result = await signIn(formData);
+      // Update FormData with trimmed values
+      const cleanFormData = new FormData();
+      cleanFormData.set("email", email);
+      cleanFormData.set("password", password);
+
+      const result = await signIn(cleanFormData);
       // If result is undefined it means redirect() was called (success)
       if (result && !result.success) {
         toast.error(result.error);
