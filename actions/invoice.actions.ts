@@ -32,6 +32,24 @@ export async function getInvoices(): Promise<Invoice[]> {
   }
 }
 
+export async function getInvoiceById(invoiceId: string): Promise<Invoice> {
+  try {
+    const userId = await getCurrentUserId();
+    const { databases } = createAdminClient();
+    const invoice = await databases.getDocument(DB, COLL, invoiceId);
+
+    // Verify ownership
+    if (invoice.userId !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    return JSON.parse(JSON.stringify(invoice)) as Invoice;
+  } catch (error) {
+    console.error("[getInvoiceById]", error);
+    throw new Error(parseAppwriteError(error));
+  }
+}
+
 export async function createInvoice(formData: FormData): Promise<{
   success: boolean;
   error?: string;

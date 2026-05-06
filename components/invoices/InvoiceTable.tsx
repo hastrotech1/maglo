@@ -4,6 +4,7 @@
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { Pencil, Trash2, CheckCheck, Plus } from "lucide-react";
+import Link from "next/link";
 import { markInvoicePaid, deleteInvoice } from "@/actions/invoice.actions";
 import type { Invoice } from "@/types/invoice";
 import InvoiceForm from "./InvoiceForm";
@@ -163,40 +164,59 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
                 return (
                   <tr
                     key={inv.$id}
-                    className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors duration-150"
+                    className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors duration-150 cursor-pointer"
                   >
                     <td className="px-4 py-3.5">
-                      <div className="font-semibold text-[13px] text-gray-800">
-                        {inv.client}
-                      </div>
-                      <div className="text-[11px] text-gray-400">
-                        {inv.email}
-                      </div>
+                      <Link
+                        href={`/invoices/${inv.$id}`}
+                        className="block group"
+                      >
+                        <div className="font-semibold text-[13px] text-gray-800 group-hover:text-[#c5e44e]">
+                          {inv.client}
+                        </div>
+                        <div className="text-[11px] text-gray-400">
+                          {inv.email}
+                        </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-3.5">
-                      <div className="text-[12px] text-gray-700">
-                        {new Date(inv.$createdAt).toLocaleDateString("en-NG", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </div>
-                      <DueCountdown dueDate={inv.dueDate} status={inv.status} />
+                      <Link href={`/invoices/${inv.$id}`}>
+                        <div className="text-[12px] text-gray-700">
+                          {new Date(inv.$createdAt).toLocaleDateString(
+                            "en-NG",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
+                        </div>
+                        <DueCountdown
+                          dueDate={inv.dueDate}
+                          status={inv.status}
+                        />
+                      </Link>
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-gray-700">
-                      {fmt(inv.amount)}
+                      <Link href={`/invoices/${inv.$id}`}>
+                        {fmt(inv.amount)}
+                      </Link>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="text-[11px] text-gray-500">
-                        {inv.vat}%
-                      </span>
-                      <br />
-                      <span className="text-[11px] text-gray-400">
-                        {fmt(inv.vatAmount)}
-                      </span>
+                      <Link href={`/invoices/${inv.$id}`}>
+                        <span className="text-[11px] text-gray-500">
+                          {inv.vat}%
+                        </span>
+                        <br />
+                        <span className="text-[11px] text-gray-400">
+                          {fmt(inv.vatAmount)}
+                        </span>
+                      </Link>
                     </td>
                     <td className="px-4 py-3.5 text-[13px] font-semibold text-gray-800">
-                      {fmt(inv.total)}
+                      <Link href={`/invoices/${inv.$id}`}>
+                        {fmt(inv.total)}
+                      </Link>
                     </td>
                     <td className="px-4 py-3.5">
                       <span

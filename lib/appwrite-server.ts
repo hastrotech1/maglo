@@ -2,14 +2,33 @@
 import { Client, Databases, Account } from "node-appwrite";
 import { cookies } from "next/headers";
 
+// Validate environment variables
+const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT?.trim();
+const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID?.trim();
+const apiKey = process.env.APPWRITE_API_KEY?.trim();
+
+if (!endpoint) {
+  throw new Error(
+    "NEXT_PUBLIC_APPWRITE_ENDPOINT is not set. Check your .env.local file.",
+  );
+}
+if (!projectId) {
+  throw new Error(
+    "NEXT_PUBLIC_APPWRITE_PROJECT_ID is not set. Check your .env.local file.",
+  );
+}
+if (!apiKey) {
+  throw new Error("APPWRITE_API_KEY is not set. Check your .env.local file.");
+}
+
 // ─── Admin client ────────────────────────────────────────────────
 // Uses the secret API key. Has full DB access.
 // Use this for creating/reading/deleting documents.
 export function createAdminClient() {
   const client = new Client()
-    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
-    .setKey(process.env.APPWRITE_API_KEY!); // ← server only
+    .setEndpoint(endpoint!)
+    .setProject(projectId!)
+    .setKey(apiKey!);
 
   return {
     databases: new Databases(client),
@@ -21,9 +40,7 @@ export function createAdminClient() {
 // Scoped to the logged-in user's session cookie.
 // Use this when you need to identify WHO is making the request.
 export async function createSessionClient() {
-  const client = new Client()
-    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+  const client = new Client().setEndpoint(endpoint!).setProject(projectId!);
 
   // Appwrite stores the session in a cookie called "appwrite-session"
   const cookieStore = await cookies();
