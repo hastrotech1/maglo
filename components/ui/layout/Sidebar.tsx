@@ -49,7 +49,7 @@ export default function Sidebar({
         className={`
           fixed md:static inset-y-0 left-0 z-50 md:z-auto
           ${collapsed ? "w-[72px]" : "w-[210px]"}
-          bg-[#FAFAFA] flex flex-col py-5 px-3
+          bg-[#FAFAFA] border-r border-gray-100 flex flex-col py-5 px-3
           transition-all duration-200 ease-in-out
           ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
@@ -74,19 +74,20 @@ export default function Sidebar({
                 key={href}
                 href={href}
                 onClick={onCloseMobile}
+                title={collapsed ? label : undefined}
                 className={`
                   flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium
                   transition-all duration-200 ease-in-out
                   ${
                     isActive
                       ? "bg-[#c5e44e] text-[#1a1a1a]"
-                      : "text-gray-500 hover:bg-white/[0.07] hover:text-gray-300"
+                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
                   }
                 `}
               >
                 <Icon
                   size={15}
-                  className={isActive ? "opacity-100" : "opacity-55"}
+                  className={isActive ? "opacity-100" : "opacity-60"}
                 />
                 <span className={collapsed ? "hidden" : ""}>{label}</span>
               </Link>
@@ -95,13 +96,14 @@ export default function Sidebar({
         </nav>
 
         {/* Bottom nav */}
-        <div className="flex flex-col gap-1 mt-4 border-t border-white/10 pt-4">
+        <div className="flex flex-col gap-1 mt-4 border-t border-gray-100 pt-4">
           <Link
             href="/help"
             onClick={onCloseMobile}
-            className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium text-gray-500 hover:bg-white/[0.07] hover:text-gray-300 transition-all duration-200"
+            title={collapsed ? "Help" : undefined}
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200"
           >
-            <HelpCircle size={15} className="opacity-55" />
+            <HelpCircle size={15} className="opacity-60" />
             <span className={collapsed ? "hidden" : ""}>Help</span>
           </Link>
 
@@ -110,9 +112,10 @@ export default function Sidebar({
           <form action={signOut}>
             <button
               type="submit"
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium text-gray-500 hover:bg-white/[0.07] hover:text-gray-300 transition-all duration-200"
+              title={collapsed ? "Logout" : undefined}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
             >
-              <LogOut size={15} className="opacity-55" />
+              <LogOut size={15} className="opacity-60" />
               <span className={collapsed ? "hidden" : ""}>Logout</span>
             </button>
           </form>
