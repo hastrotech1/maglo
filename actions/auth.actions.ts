@@ -1,85 +1,65 @@
-// src/actions/auth.actions.ts
 "use server";
 
 import { createAdminClient } from "@/lib/appwrite-server";
+import { parseAppwriteError } from "@/lib/appwrite-error";
 import { ID } from "node-appwrite";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export async function signUp(formData: FormData) {
+type AuthResult = { success: true } | { success: false; error: string };
+
+export async function signUp(formData: FormData): Promise<AuthResult> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const name = formData.get("name") as string;
 
-  const { account } = createAdminClient();
+  if (!name?.trim()) return { success: false, error: "Full name is required." };
+  if (!email?.trim()) return { success: false, error: "Email is required." };
+  if (!password || password.length < 8)
+    return { success: false, error: "Password must be at least 8 characters." };
 
-  // Basic validation
-  if (!email || typeof email !== "string") {
-    throw new Error("Invalid email");
+  try {
+    const { account } = createAdminClient();
+    await account.create(ID.unique(), email, password, name);
+    const session = await account.createEmailPasswordSession(email, password);
+
+    const cookieStore = await cookies();
+    cookieStore.set("appwrite-session", session.secret, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // ← fixes dev localhost
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(session.expire),
+    });
+  } catch (error) {
+    return { success: false, error: parseAppwriteError(error) };
   }
-  if (
-    !password ||
-    typeof password !== "string" ||
-    password.length < 8 ||
-    password.length > 256
-  ) {
-    throw new Error(
-      "Invalid `password` param: Password must be between 8 and 256 characters long.",
-    );
-  }
-  if (!name || typeof name !== "string") {
-    throw new Error("Invalid name");
-  }
 
-  // Create user account
-  await account.create(ID.unique(), email, password, name);
-
-  // Immediately create a session so they're logged in after signup
-  const session = await account.createEmailPasswordSession(email, password);
-
-  // Store session in httpOnly cookie — not accessible by JS
-  const cookieStore = await cookies();
-  cookieStore.set("appwrite-session", session.secret, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-    expires: new Date(session.expire),
-  });
-
-  redirect("/dashboard");
+  redirect("/dashboard"); // outside try/catch — Next.js redirect must propagate
 }
 
-export async function signIn(formData: FormData) {
+export async function signIn(formData: FormData): Promise<AuthResult> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  const { account } = createAdminClient();
-  // Basic validation
-  if (!email || typeof email !== "string") {
-    throw new Error("Invalid email");
-  }
-  if (
-    !password ||
-    typeof password !== "string" ||
-    password.length < 8 ||
-    password.length > 256
-  ) {
-    throw new Error(
-      "Invalid `password` param: Password must be between 8 and 256 characters long.",
-    );
-  }
+  if (!email?.trim()) return { success: false, error: "Email is required." };
+  if (!password) return { success: false, error: "Password is required." };
 
-  const session = await account.createEmailPasswordSession(email, password);
+  try {
+    const { account } = createAdminClient();
+    const session = await account.createEmailPasswordSession(email, password);
 
-  const cookieStore = await cookies();
-  cookieStore.set("appwrite-session", session.secret, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-    expires: new Date(session.expire),
-  });
+    const cookieStore = await cookies();
+    cookieStore.set("appwrite-session", session.secret, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(session.expire),
+    });
+  } catch (error) {
+    return { success: false, error: parseAppwriteError(error) };
+  }
 
   redirect("/dashboard");
 }

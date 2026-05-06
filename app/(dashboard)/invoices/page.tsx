@@ -8,7 +8,7 @@ export default async function InvoicesPage() {
   const invoices = await getInvoices();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">
         Invoices
       </h1>

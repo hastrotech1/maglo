@@ -72,8 +72,11 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
   function handleMarkPaid(id: string) {
     startTransition(async () => {
       const res = await markInvoicePaid(id);
-      if (res.success) toast.success("Invoice marked as paid");
-      else toast.error("Something went wrong");
+      if (res.success) {
+        toast.success("Invoice marked as paid ✓");
+      } else {
+        toast.error(res.error ?? "Failed to update invoice");
+      }
     });
   }
 
@@ -81,8 +84,11 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
     if (!confirm("Delete this invoice? This cannot be undone.")) return;
     startTransition(async () => {
       const res = await deleteInvoice(id);
-      if (res.success) toast.success("Invoice deleted");
-      else toast.error("Something went wrong");
+      if (res.success) {
+        toast.success("Invoice deleted");
+      } else {
+        toast.error(res.error ?? "Failed to delete invoice");
+      }
     });
   }
 

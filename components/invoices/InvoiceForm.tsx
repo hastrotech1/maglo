@@ -73,10 +73,12 @@ export default function InvoiceForm({ initial, onClose }: Props) {
         : await createInvoice(fd);
 
       if (res.success) {
-        toast.success(initial ? "Invoice updated" : "Invoice created");
+        toast.success(initial ? "Invoice updated ✓" : "Invoice created ✓");
         onClose();
       } else {
-        toast.error("Please fix the errors and try again");
+        // Show the specific Appwrite error OR field errors
+        const msg = res.error ?? "Please fix the errors and try again";
+        toast.error(msg);
       }
     });
   };
@@ -95,6 +97,7 @@ export default function InvoiceForm({ initial, onClose }: Props) {
           </h2>
           <button
             onClick={onClose}
+            aria-label="cancel"
             className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 transition-colors"
           >
             <X size={14} />
