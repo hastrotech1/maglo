@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import Sidebar from "@/components/ui/layout/Sidebar";
 import Topbar from "@/components/ui/layout/Topbar";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {
