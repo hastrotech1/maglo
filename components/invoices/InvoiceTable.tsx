@@ -136,7 +136,7 @@ export default function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
             className="ml-auto flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#c5e44e] text-[#1a1a1a] text-[12px] font-semibold hover:-translate-y-px hover:shadow-md hover:shadow-lime-200 transition-all duration-150"
           >
             <Plus size={13} />
-            New Invoice
+            Invoice
           </button>
         </div>
 
