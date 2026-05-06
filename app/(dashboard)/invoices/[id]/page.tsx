@@ -56,7 +56,7 @@ export default async function InvoiceDetailPage({
   return (
     <div className="space-y-6">
       {/* Header with back button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/invoices"
           className="inline-flex items-center gap-2 text-[13px] font-semibold text-gray-500 hover:text-gray-700"
@@ -64,7 +64,7 @@ export default async function InvoiceDetailPage({
           <ArrowLeft size={14} />
           Back to Invoices
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-[12px] font-semibold hover:bg-gray-50 transition-colors flex items-center gap-1.5">
             <Eye size={14} />
             Preview
@@ -77,11 +77,11 @@ export default async function InvoiceDetailPage({
       </div>
 
       {/* Main invoice container */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column - Invoice details */}
-        <div className="col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           {/* Company info */}
-          <div className="bg-[#1a1a1a] text-white rounded-2xl p-6 space-y-4">
+          <div className="bg-[#1a1a1a] text-white rounded-2xl p-6 space-y-4 shadow-md shadow-black/10">
             <div>
               <h2 className="text-[18px] font-bold">Maglo.</h2>
               <p className="text-[12px] text-gray-400 mt-1">
@@ -96,7 +96,7 @@ export default async function InvoiceDetailPage({
           </div>
 
           {/* Invoice header info */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <p className="text-[11px] font-semibold text-gray-500 mb-2">
                 Invoice Number
@@ -137,7 +137,7 @@ export default async function InvoiceDetailPage({
           </div>
 
           {/* Items table */}
-          <div>
+          <div className="hidden md:block">
             <h3 className="text-[13px] font-semibold text-gray-900 mb-3">
               Invoice Details
             </h3>
@@ -180,13 +180,42 @@ export default async function InvoiceDetailPage({
               </tbody>
             </table>
           </div>
+
+          {/* Mobile items list */}
+          <div className="md:hidden">
+            <h3 className="text-[13px] font-semibold text-gray-900 mb-3">
+              Invoice Details
+            </h3>
+            <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden bg-white shadow-sm shadow-gray-200/60">
+              <div className="p-3 flex items-center justify-between text-[12px]">
+                <span className="text-gray-500">Base Amount</span>
+                <span className="font-semibold text-gray-900">
+                  {fmt(invoice.amount)}
+                </span>
+              </div>
+              <div className="p-3 flex items-center justify-between text-[12px]">
+                <span className="text-gray-500">
+                  VAT ({invoice.vat.toFixed(2)}%)
+                </span>
+                <span className="font-semibold text-gray-900">
+                  {fmt(invoice.vatAmount)}
+                </span>
+              </div>
+              <div className="p-3 flex items-center justify-between text-[13px] bg-gray-50">
+                <span className="font-semibold text-gray-900">Total</span>
+                <span className="font-bold text-gray-900">
+                  {fmt(invoice.total)}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right column - Summary */}
         <div className="space-y-4">
           {/* Status badge */}
           <div
-            className={`rounded-lg p-4 ${
+            className={`rounded-lg p-4 shadow-sm shadow-gray-200/60 ${
               invoice.status === "paid" ? "bg-emerald-50" : "bg-amber-50"
             }`}
           >
@@ -202,7 +231,7 @@ export default async function InvoiceDetailPage({
           </div>
 
           {/* Summary box */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3 shadow-sm shadow-gray-200/60">
             <div>
               <p className="text-[11px] text-gray-500">Subtotal</p>
               <p className="text-[14px] font-bold text-gray-900">
@@ -215,7 +244,7 @@ export default async function InvoiceDetailPage({
                 {fmt(invoice.vatAmount)}
               </p>
             </div>
-            <div className="border-t border-gray-200 pt-3 bg-white rounded p-3">
+            <div className="border-t border-gray-200 pt-3 bg-white rounded p-3 shadow-sm shadow-gray-200/60">
               <p className="text-[11px] text-gray-500">Total Amount Due</p>
               <p className="text-[18px] font-bold text-gray-900">
                 {fmt(invoice.total)}
@@ -224,7 +253,7 @@ export default async function InvoiceDetailPage({
           </div>
 
           {/* Action buttons */}
-          <button className="w-full py-3 rounded-lg bg-[#c5e44e] text-[#1a1a1a] text-[13px] font-bold hover:-translate-y-px hover:shadow-md hover:shadow-lime-200 transition-all">
+          <button className="w-full py-3 rounded-lg bg-[#c5e44e] text-[#1a1a1a] text-[13px] font-bold shadow-sm shadow-lime-200/70 hover:-translate-y-px hover:shadow-md hover:shadow-lime-200 transition-all">
             Send Invoice
           </button>
         </div>
