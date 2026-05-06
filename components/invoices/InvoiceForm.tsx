@@ -93,7 +93,7 @@ export default function InvoiceForm({ initial, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[16px] font-bold text-gray-900">
-            {initial ? "Edit Invoice" : "New Invoice"}
+            {initial ? "Edit Invoice" : "Invoice"}
           </h2>
           <button
             onClick={onClose}
