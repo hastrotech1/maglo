@@ -4,6 +4,12 @@ import type { Invoice } from "@/types/invoice";
 const fmt = (n: number) =>
   "₦" + n.toLocaleString("en-NG", { minimumFractionDigits: 2 });
 
+const monthFormatter = new Intl.DateTimeFormat("en-NG", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 // Group invoices by month and compute VAT per month
 function getMonthlyVat(invoices: Invoice[]) {
   const map = new Map<string, number>();
@@ -19,10 +25,7 @@ function getMonthlyVat(invoices: Invoice[]) {
     .sort(([a], [b]) => b.localeCompare(a)) // newest first
     .slice(0, 3)
     .map(([month, vat]) => ({
-      label: new Date(month + "-01").toLocaleDateString("en-NG", {
-        month: "long",
-        year: "numeric",
-      }),
+      label: monthFormatter.format(new Date(month + "-01")),
       vat,
     }));
 }
@@ -36,8 +39,8 @@ export default function VatSummary({ invoices }: { invoices: Invoice[] }) {
   const monthlyVat = getMonthlyVat(invoices);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div className="bg-white border border-gray-100 rounded-xl p-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="bg-white border border-gray-100 rounded-xl p-4 col-span-2 sm:col-span-1">
         <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-400 mb-1">
           Output VAT (Collected)
         </p>

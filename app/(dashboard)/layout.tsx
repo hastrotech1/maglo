@@ -1,7 +1,6 @@
 import { createSessionClient } from "@/lib/appwrite-server";
 import { redirect } from "next/navigation";
-import Sidebar from "@/components/ui/layout/Sidebar";
-import Topbar from "@/components/ui/layout/Topbar";
+import DashboardShell from "@/components/ui/layout/DashboardShell";
 
 export const dynamic = "force-dynamic";
 
@@ -21,14 +20,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Topbar user={{ name: user.name, email: user.email }} />
-        <main className="flex-1 overflow-y-auto p-6 bg-[#FFFFFF]">
-          {children}
-        </main>
-      </div>
-    </div>
+    <DashboardShell user={{ name: user.name, email: user.email }}>
+      {children}
+    </DashboardShell>
   );
 }
